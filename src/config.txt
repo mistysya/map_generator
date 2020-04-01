@@ -1,0 +1,17 @@
+[Position]
+map_path = src/map_generator/map1.png
+record_path = record/
+width = 1024
+height = 512
+bias_x = 0
+bias_y = 0
+scale_ratio = 75
+show_freq = 100
+is_show_map = 1
+is_draw_path = 0
+is_save_map = 0
+
+[MapGenerator]
+is_record_data = 1
+use_thread = 0
+show_map_in_thread = 1
