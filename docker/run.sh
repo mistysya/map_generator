@@ -7,7 +7,7 @@ docker run \
         --privileged \
         --net=host \
         --ipc=host \
-        -v /home/misty/catkin_ws/src/map_generator/:/root/catkin_ws/src/map_generator/ \
+        -v /home/$USER/catkin_ws/src/map_generator/:/root/catkin_ws/src/map_generator/ \
         -v /tmp/.X11-unix:/tmp/.X11-unix \
         -e DISPLAY=$DISPLAY \
         ros:map-generator \
