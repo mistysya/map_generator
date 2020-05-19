@@ -8,8 +8,9 @@ bias_y = 0
 scale_ratio = 75
 show_freq = 100
 is_show_map = 1
-is_draw_path = 0
+is_draw_path = 1
 is_save_map = 0
+is_use_zed2 = 1
 
 [MapGenerator]
 is_record_data = 1

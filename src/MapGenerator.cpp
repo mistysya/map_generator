@@ -25,6 +25,8 @@ void MapGenerator::initFromConfig(string config_path) {
     bool is_show_map  = cf.Value("Position", "is_show_map");
     bool is_draw_path = cf.Value("Position", "is_draw_path");
     bool is_save_map  = cf.Value("Position", "is_save_map");
+    bool is_use_zed2  = cf.Value("Position", "is_use_zed2");
+    cout << "CONFIG:" << is_use_zed2 << endl;
     bool is_rec            = cf.Value("MapGenerator", "is_record_data");
     bool u_thread          = cf.Value("MapGenerator", "use_thread");
     bool show_map_thread   = cf.Value("MapGenerator", "show_map_in_thread");
@@ -36,13 +38,13 @@ void MapGenerator::initFromConfig(string config_path) {
     if (this->use_thread)
         is_show_map = false;
 
-    this->pos.initMap(map_path, width, height, bias_x, bias_y, scale_ratio, this->show_freq, is_show_map, is_draw_path, is_save_map);
+    this->pos.initMap(map_path, width, height, bias_x, bias_y, scale_ratio, this->show_freq, is_show_map, is_draw_path, is_save_map, is_use_zed2);
 }
 
 int MapGenerator::initialize() {
-    this->pos.initSubscribe(argc, argv);
+    //this->pos.initSubscribe(argc, argv);
     if (this->argc == 1) {
-        this->pos.initMap("map1.png", 1024, 512, 0, 0, 75, this->show_freq, true, true, false);
+        this->pos.initMap("map1.png", 1024, 512, 0, 0, 75, this->show_freq, true, true, false, true);
     }
     else if (this->argc == 2) {
         initFromConfig(this->argv[1]);
@@ -53,6 +55,7 @@ int MapGenerator::initialize() {
         cout << "                     2). Custom setting with only 1 parameter as its config file path" << endl;
         return 1;
     }
+    this->pos.initSubscribe(argc, argv);
     return 0;
 }
 

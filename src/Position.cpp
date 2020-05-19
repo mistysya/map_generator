@@ -14,7 +14,7 @@ Position::Position() {
     this->pos_color = Scalar(0, 0, 255);
 }
 
-void Position::initMap(string map_filepath, int width, int height, int bias_x, int bias_y, int scale_ratio, int show_freq, bool is_show_map, bool is_draw_path, bool is_save_map) {
+void Position::initMap(string map_filepath, int width, int height, int bias_x, int bias_y, int scale_ratio, int show_freq, bool is_show_map, bool is_draw_path, bool is_save_map, bool is_use_zed2) {
     this->map_filepath = map_filepath;
     this->width = width;
     this->height = height;
@@ -25,6 +25,7 @@ void Position::initMap(string map_filepath, int width, int height, int bias_x, i
     this->is_show_map = is_show_map;
     this->is_draw_path = is_draw_path;
     this->is_save_map = is_save_map;
+    this->is_use_zed2 = is_use_zed2;
     this->pos_x = 0 + this->bias_x;
     this->pos_y = this->bias_y - 0;
     this->loadMap();
@@ -167,13 +168,33 @@ void Position::initSubscribe(int argc, char** argv) {
         cout << "[ERROR] ROS system run failed!!!!!" << endl;
         return;
     }
-
-    this->sub = handler.subscribe("/loop_fusion/pose_graph_path", 10, &Position::pathCallback, this);
+    cout << "STATUS: " << this->is_use_zed2 << endl;
+    if (this->is_use_zed2){
+	this->sub = handler.subscribe("/zed2/zed_node/pose", 10, &Position::zed2Callback, this);
+	cout << "USE_ZED2" << endl;
+    }
+    else {
+        this->sub = handler.subscribe("/loop_fusion/pose_graph_path", 10, &Position::vinsfusionCallback, this);
+	cout << "USE_VINS_FUSION" << endl;
+    }
 }
 
-void Position::pathCallback(const nav_msgs::Path::ConstPtr& msg) {
+void Position::zed2Callback(const geometry_msgs::PoseStamped::ConstPtr& msg) {
+    double raw_x = msg->pose.position.x;
+    double raw_y = msg->pose.position.y;
+    cout << "x:" << raw_x << " " << "y:" << raw_y << endl;
+    this->updatePosition(raw_x, raw_y);
+}
+
+void Position::vinsfusionCallback(const nav_msgs::Path::ConstPtr& msg) {
     double raw_x = msg->poses.back().pose.position.x;
     double raw_y = msg->poses.back().pose.position.y;
+    this->updatePosition(raw_x, raw_y);
+}
+
+void Position::updatePosition(float raw_x, float raw_y) {
+    // double raw_x = msg->poses.back().pose.position.x;
+    // double raw_y = msg->poses.back().pose.position.y;
     // Get appropriate position value
     this->pos_x = round(raw_x * this->scale_ratio) + this->bias_x;
     this->pos_y = this->bias_y - round(raw_y * this->scale_ratio);
@@ -200,7 +221,7 @@ void Position::pathCallback(const nav_msgs::Path::ConstPtr& msg) {
         this->saveMap();
         cout << "[INFO] Saving map." << endl;
     }
-    // ROS_INFO("Position-> x:[%f] y:[%f]", raw_x, raw_y);
+    ROS_INFO("Position-> x:[%f] y:[%f]", raw_x, raw_y);
 }
 
 Point Position::getPosition() {
