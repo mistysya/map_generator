@@ -9,6 +9,7 @@ MapGenerator::MapGenerator(int argc, char** argv, bool *runMainThread) {
     this->is_record_data = false;
     this->use_thread = false;
     this->show_map_in_thread = true;
+    this->is_publish = true;
 }
 
 void MapGenerator::initFromConfig(string config_path) {
@@ -30,11 +31,13 @@ void MapGenerator::initFromConfig(string config_path) {
     bool is_rec            = cf.Value("MapGenerator", "is_record_data");
     bool u_thread          = cf.Value("MapGenerator", "use_thread");
     bool show_map_thread   = cf.Value("MapGenerator", "show_map_in_thread");
+    bool is_publish        = cf.Value("MapGenerator", "is_publish");
     this->show_freq = freq;
     this->record_path = rec_path;
     this->is_record_data = is_rec;
     this->use_thread = u_thread;
     this->show_map_in_thread = show_map_thread;
+    this->is_publish = is_publish;
     if (this->use_thread)
         is_show_map = false;
 
@@ -60,11 +63,44 @@ int MapGenerator::initialize() {
 }
 
 Point MapGenerator::getPosition() {
+    //if (this->is_publish)
+    //this->publishPosition();
+    //cout << "GET POINT" << endl;
     return this->cur_pos;
 }
 
 Mat MapGenerator::getMap() {
+    //if (this->is_publish)
+    //this->publishMap();
+    //cout << "GET MAP" << endl;
     return this->cur_map;
+}
+
+void MapGenerator::publisherInitialize() {
+    ros::init(argc, argv, "position_publisher");
+    cout << "Publisher initialize successfully" << endl;
+    ros::NodeHandle n;
+    this->position_pub = n.advertise<geometry_msgs::Point>("position/point", 1);
+    cout << "Create position/point topic successfully" << endl;
+    image_transport::ImageTransport it(n);
+    this->map_pub = it.advertise("position/map", 1);
+    cout << "Create position/map topic successfully" << endl;
+}
+
+void MapGenerator::publishPosition() {
+    geometry_msgs::Point pos_msg;
+    pos_msg.x = this->cur_pos.x;
+    pos_msg.y = this->cur_pos.y;
+    pos_msg.z = 0;
+
+    this->position_pub.publish(pos_msg);
+    ros::spinOnce();
+}
+
+void MapGenerator::publishMap() {
+    sensor_msgs::ImagePtr map_msg = cv_bridge::CvImage(std_msgs::Header(), "bgr8", this->cur_map).toImageMsg();
+    this->map_pub.publish(map_msg);
+    ros::spinOnce();
 }
 
 void MapGenerator::run() {
@@ -79,6 +115,10 @@ void MapGenerator::run() {
     while (ros::ok() && *(this->runMainThread)) {
         this->cur_pos = this->pos.getPosition();
         this->cur_map = this->pos.getMap();
+	if (this->is_publish) {
+	    this->publishPosition();
+	    this->publishMap();
+	}
         if (this->is_record_data) {
             cout << this->record_path + "/images/" + to_string(counter) + ".png" << endl;
             log << cur_pos.x << " " << cur_pos.y << "\n"; 

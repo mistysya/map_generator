@@ -14,6 +14,7 @@ void main_recv_sigint(int sig) {
 int main(int argc, char** argv) {
     MapGenerator map_generator(argc, argv, &runMainThread);
     int status = map_generator.initialize();
+    map_generator.publisherInitialize();
     if (status)
         return status;
 
